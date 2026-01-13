@@ -1,0 +1,5 @@
+{
+  "webhookUrl": "DISCORD_WEBHOOK_URL",
+  "enableJoinMessages": true,
+  "enableLeaveMessages": true
+}
