@@ -1,5 +1,17 @@
 {
-  "webhookUrl": "DISCORD_WEBHOOK_URL",
-  "enableJoinMessages": true,
-  "enableLeaveMessages": true
+  "webhookUrl": "",
+  "messages": {
+    "player": {
+      "enabled": true,
+      "webhookUrl": "",
+      "enableJoinMessages": true,
+      "enableLeaveMessages": true
+    },
+    "server": {
+      "enabled": true,
+      "webhookUrl": "",
+      "enableStartedMessages": true,
+      "enableStoppedMessages": true
+    }
+  }
 }
