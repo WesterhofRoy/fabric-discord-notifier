@@ -19,13 +19,12 @@ object PlayerEventHandler : EventHandler {
         if (playerMessagesConfig.enableJoinMessages) {
             ServerPlayConnectionEvents.JOIN.register { handler, _, server ->
                 val player = handler.player
-                val message = "🟢  ${player.name.string} joined! (${server.currentPlayerCount + 1} online)"
-
-                logger.info(message)
-
                 val playerNames = server.playerNames.plus(player.name.string).joinToString(", ")
-                val discordMessage = "$message\nPlayers: $playerNames"
-                DiscordMessageSender.sendMessage(webhookUrl, discordMessage)
+
+                val message = "🟢  ${player.name.string} joined! (${server.currentPlayerCount + 1} online)" +
+                    "\nPlayers online: $playerNames"
+
+                DiscordMessageSender.sendMessage(webhookUrl, message)
             }
         }
 
@@ -33,9 +32,8 @@ object PlayerEventHandler : EventHandler {
             ServerPlayConnectionEvents.DISCONNECT.register { handler, server ->
                 val player = handler.player
                 val playerCount = server.currentPlayerCount - 1
-                val message = "🔴  ${player.name.string} left! ($playerCount online)"
 
-                logger.info(message)
+                val message = "🔴  ${player.name.string} left.. ($playerCount online)"
 
                 DiscordMessageSender.sendMessage(webhookUrl, message)
             }
