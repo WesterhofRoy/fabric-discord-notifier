@@ -21,8 +21,6 @@ object PlayerEventHandler : EventHandler {
                 val player = handler.player
                 val message = "🟢  ${player.name.string} joined! (${server.currentPlayerCount + 1} online)"
 
-                logger.info(message)
-
                 val playerNames = server.playerNames.plus(player.name.string).joinToString(", ")
                 val discordMessage = "$message\nPlayers: $playerNames"
                 DiscordMessageSender.sendMessage(webhookUrl, discordMessage)
@@ -34,8 +32,6 @@ object PlayerEventHandler : EventHandler {
                 val player = handler.player
                 val playerCount = server.currentPlayerCount - 1
                 val message = "🔴  ${player.name.string} left! ($playerCount online)"
-
-                logger.info(message)
 
                 DiscordMessageSender.sendMessage(webhookUrl, message)
             }
