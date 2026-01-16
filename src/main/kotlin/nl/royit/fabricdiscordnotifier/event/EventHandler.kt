@@ -1,4 +1,4 @@
-package nl.royit.playerdiscordnotifier.event
+package nl.royit.fabricdiscordnotifier.event
 
 interface EventHandler {
     fun registerEventHandler()

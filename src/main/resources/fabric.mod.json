@@ -1,40 +1,28 @@
 {
   "schemaVersion": 1,
-  "id": "player-discord-notifier",
+  "id": "fabric-discord-notifier",
   "version": "${version}",
-  "name": "player-discord-notifier",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "fabric-discord-notifier",
+  "description": "Simple mod that sends notifications about server events to discord.",
   "authors": [
-    "Me!"
+    "Roy Westerhof"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "roy-it.nl",
+    "sources": "https://github.com/WesterhofRoy/fabric-discord-notifier"
   },
-  "license": "CC0-1.0",
-  "icon": "assets/player-discord-notifier/icon.png",
-  "environment": "*",
+  "license": "Apache 2.0",
+  "icon": "assets/fabric-discord-notifier/icon.png",
+  "environment": "server",
   "entrypoints": {
     "main": [
       {
-        "value": "nl.royit.playerdiscordnotifier.DiscordNotifier",
-        "adapter": "kotlin"
-      }
-    ],
-    "client": [
-      {
-        "value": "nl.royit.playerdiscordnotifier.PlayerDiscordNotifierClient",
+        "value": "nl.royit.fabricdiscordnotifier.FabricDiscordNotifier",
         "adapter": "kotlin"
       }
     ]
   },
-  "mixins": [
-    "player-discord-notifier.mixins.json",
-    {
-      "config": "player-discord-notifier.client.mixins.json",
-      "environment": "client"
-    }
-  ],
+  "mixins": [],
   "depends": {
     "fabricloader": ">=0.18.4",
     "minecraft": "~1.21.11",

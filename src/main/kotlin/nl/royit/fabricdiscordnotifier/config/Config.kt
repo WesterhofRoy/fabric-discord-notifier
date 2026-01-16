@@ -1,4 +1,4 @@
-package nl.royit.playerdiscordnotifier.config
+package nl.royit.fabricdiscordnotifier.config
 
 // See: resources/player-discord-notifier.json
 

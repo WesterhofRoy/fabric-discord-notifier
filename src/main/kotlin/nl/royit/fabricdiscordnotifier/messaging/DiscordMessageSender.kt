@@ -1,4 +1,4 @@
-package nl.royit.playerdiscordnotifier.messaging
+package nl.royit.fabricdiscordnotifier.messaging
 
 import com.google.gson.Gson
 import java.net.URI
@@ -7,7 +7,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import nl.royit.playerdiscordnotifier.helper.Logger.logger
+import nl.royit.fabricdiscordnotifier.helper.Logger.logger
 
 object DiscordMessageSender {
     private val executor = Executors.newSingleThreadExecutor {
