@@ -14,6 +14,5 @@ plugins:
           release: major
   - "@semantic-release/release-notes-generator"
   - - "@semantic-release/exec"
-    - prepareCmd: >
-        "sed -i 's/^mod_version=.*/mod_version=${nextRelease.version}/' gradle.properties"
+    - prepareCmd: sed -i s/^mod_version=.*/mod_version=${nextRelease.version}/ gradle.properties
   - "@semantic-release/github"
