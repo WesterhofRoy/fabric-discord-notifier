@@ -24,7 +24,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "25"
-      - name: Release
+      - name: Install semantic-release plugins
+        run: |
+          npm install -g \
+            semantic-release \
+            @semantic-release/commit-analyzer \
+            @semantic-release/release-notes-generator \
+            @semantic-release/github \
+            @semantic-release/exec
+      - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: semantic-release
