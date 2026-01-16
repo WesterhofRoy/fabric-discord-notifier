@@ -1,11 +1,11 @@
-package nl.royit.playerdiscordnotifier.event
+package nl.royit.fabricdiscordnotifier.event
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
-import nl.royit.playerdiscordnotifier.config.ConfigManager.config
-import nl.royit.playerdiscordnotifier.helper.Logger.logger
-import nl.royit.playerdiscordnotifier.messaging.DiscordMessageSender
+import nl.royit.fabricdiscordnotifier.config.ConfigManager.config
+import nl.royit.fabricdiscordnotifier.helper.Logger.logger
+import nl.royit.fabricdiscordnotifier.messaging.DiscordMessageSender
 
 object ServerEventHandler : EventHandler {
     override fun registerEventHandler() {

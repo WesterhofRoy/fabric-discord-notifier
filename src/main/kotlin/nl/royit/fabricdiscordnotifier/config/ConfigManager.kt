@@ -1,9 +1,9 @@
-package nl.royit.playerdiscordnotifier.config
+package nl.royit.fabricdiscordnotifier.config
 
 import com.google.gson.GsonBuilder
 import java.nio.file.Files
 import net.fabricmc.loader.api.FabricLoader
-import nl.royit.playerdiscordnotifier.helper.Logger.logger
+import nl.royit.fabricdiscordnotifier.helper.Logger.logger
 
 object ConfigManager {
     private val gson = GsonBuilder().setPrettyPrinting().create()

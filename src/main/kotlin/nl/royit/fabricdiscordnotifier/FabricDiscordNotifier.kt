@@ -1,12 +1,12 @@
-package nl.royit.playerdiscordnotifier
+package nl.royit.fabricdiscordnotifier
 
 import net.fabricmc.api.ModInitializer
-import nl.royit.playerdiscordnotifier.config.ConfigManager
-import nl.royit.playerdiscordnotifier.event.PlayerEventHandler
-import nl.royit.playerdiscordnotifier.event.ServerEventHandler
+import nl.royit.fabricdiscordnotifier.config.ConfigManager
+import nl.royit.fabricdiscordnotifier.event.PlayerEventHandler
+import nl.royit.fabricdiscordnotifier.event.ServerEventHandler
 
 @Suppress("kotlin:S6516") // Suppress: Functional interface implementations should use lambda expressions
-object DiscordNotifier : ModInitializer {
+object FabricDiscordNotifier : ModInitializer {
 
     override fun onInitialize() {
         ConfigManager.load()

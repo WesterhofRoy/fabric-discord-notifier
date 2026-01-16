@@ -1,4 +1,4 @@
-package nl.royit.playerdiscordnotifier.helper
+package nl.royit.fabricdiscordnotifier.helper
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

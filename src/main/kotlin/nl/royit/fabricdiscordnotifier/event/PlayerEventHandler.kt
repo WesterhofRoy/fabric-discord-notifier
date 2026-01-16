@@ -1,9 +1,9 @@
-package nl.royit.playerdiscordnotifier.event
+package nl.royit.fabricdiscordnotifier.event
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
-import nl.royit.playerdiscordnotifier.config.ConfigManager.config
-import nl.royit.playerdiscordnotifier.helper.Logger.logger
-import nl.royit.playerdiscordnotifier.messaging.DiscordMessageSender
+import nl.royit.fabricdiscordnotifier.config.ConfigManager.config
+import nl.royit.fabricdiscordnotifier.helper.Logger.logger
+import nl.royit.fabricdiscordnotifier.messaging.DiscordMessageSender
 
 object PlayerEventHandler : EventHandler {
     override fun registerEventHandler() {
