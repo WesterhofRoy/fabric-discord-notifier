@@ -19,6 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ssh-key: ${{ secrets.VERSION_BUMPER_PRIVATE_KEY }}
           fetch-depth: 0
       - name: Setup Node.js
         uses: actions/setup-node@v4
