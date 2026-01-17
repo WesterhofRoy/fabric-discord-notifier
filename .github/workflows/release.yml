@@ -8,13 +8,25 @@ permissions:
   contents: read # for checkout
 
 jobs:
+  validate:
+    name: Validate Build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: run gradle build
+        uses: ./.github/actions/gradle-build
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    needs: validate
     permissions:
       contents: write # to be able to publish a GitHub release
       issues: write # to be able to comment on released issues
       pull-requests: write # to be able to comment on released pull requests
+    outputs:
+      is_release: ${{ steps.release-check.outputs.is_release }}
+      release_tag: ${{ steps.release-check.outputs.release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,17 +36,45 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "25"
+          node-version: "24"
       - name: Install semantic-release plugins
         run: |
           npm install -g \
             semantic-release \
-            @semantic-release/commit-analyzer \
-            @semantic-release/release-notes-generator \
-            @semantic-release/github \
             @semantic-release/exec \
             @semantic-release/git
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: semantic-release
+      - name: Output release information
+        id: release-check
+        shell: bash
+        run: |
+          TAG=$(git describe --tags --abbrev=0 --exact-match 2>/dev/null || true)
+
+          if [ -z "$TAG" ]; then
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+          fi
+  publish:
+    name: Publish
+    runs-on: ubuntu-24.04
+    needs: release
+    if: needs.release.outputs.is_release == 'true'
+    permissions:
+      contents: write # to be able to add artifact to GitHub release
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: run gradle build
+        uses: ./.github/actions/gradle-build
+      - name: Upload JAR to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release.outputs.release_tag }}
+          files: "build/libs/*.jar"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
