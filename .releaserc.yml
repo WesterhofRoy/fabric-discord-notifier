@@ -18,5 +18,5 @@ plugins:
   - - "@semantic-release/git"
     - assets:
         - gradle.properties
-      message: "write release: ${nextRelease.version}"
+      message: "[github-actions]: release ${nextRelease.version}"
   - "@semantic-release/github"
