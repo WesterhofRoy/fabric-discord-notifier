@@ -20,4 +20,4 @@ jobs:
           chmod +x yq
       - id: prepare
         run: |
-          echo "matrix=$(./yq -o=json '{include: .include}' .github/fabric-compatibility-matrix.yml | jq -c .)" >> $GITHUB_OUTPUT
+          echo "matrix=$(./yq -o=json '.' .github/fabric-compatibility-matrix.yml | jq -c .)" >> $GITHUB_OUTPUT
