@@ -1,0 +1,50 @@
+name: Fabric compatibility smoke test
+description: Starts a Fabric server with a mod jar and verifies it loads
+
+inputs:
+  mc_version:
+    required: true
+    description: The Minecraft version the fabric server should be running
+  loader_version:
+    required: true
+    default: "0.18.4"
+    description: Fabric loader version to use
+  installer_version:
+    required: true
+    default: "1.1.1"
+    description: Fabric installer version to use
+  log_message:
+    required: false
+    default: "Fabric discord notifier initialized"
+    description: Log message to validate after server has started
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'microsoft'
+        cache: 'gradle'
+    - name: Prepare server dir
+      shell: bash
+      run: mkdir -p server/libraries
+    - uses: actions/cache@v4
+      with:
+        path: server/libraries
+        key: fabric-libs-${{ inputs.mc_version }}-${{ inputs.loader_version }}
+    - name: Setup Fabric server
+      shell: bash
+      run: |
+        cd server
+        curl -OJ https://meta.fabricmc.net/v2/versions/loader/${{ inputs.mc_version }}/${{ inputs.loader_version }}/${{ inputs.installer_version }}/server/jar
+        mv *.jar fabric-server.jar
+        echo "eula=true" > eula.txt
+        mkdir mods
+        cp ../*.jar mods/
+    - name: Smoke test server start
+      shell: bash
+      run: |
+        cd server
+        timeout 60 java -jar fabric-server.jar nogui || echo "Server exited"
+        test -f logs/latest.log && grep -q "${{ inputs.log_message }}" logs/latest.log
