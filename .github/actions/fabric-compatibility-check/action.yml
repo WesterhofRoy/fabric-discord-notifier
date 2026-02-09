@@ -16,7 +16,7 @@ inputs:
   additional_mod_urls:
     required: false
     default: ""
-    description: Space-separated list of mod jar URLs to install
+    description: Newline-separated list of mod jar URLs to install
   log_message:
     required: false
     default: "Fabric discord notifier initialized"
@@ -60,7 +60,7 @@ runs:
           # skip on empty string
           [ -z "$url" ] && continue
           echo "Downloading mod dependency: $url"
-          curl -L -o "mods/$(basename "$url")" "$url"
+          curl -fL --retry 2 --retry-delay 2 -o "mods/$(basename "$url")" "$url"
         done <<< "${{ inputs.additional_mod_urls }}"
         
         # print all mods for debugging
