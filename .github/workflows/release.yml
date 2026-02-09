@@ -8,18 +8,33 @@ permissions:
   contents: read # for checkout
 
 jobs:
-  validate:
+  build:
     name: Validate Build
     runs-on: ubuntu-24.04
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-      - name: run gradle build
-        uses: ./.github/actions/gradle-build
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/gradle-build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-jar
+          path: build/libs/*.jar
+  compatibility-tests:
+    needs: build
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        mc_version: [1.20.1, 1.21.11]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mod-jar
+      - uses: ./.github/actions/fabric-compatibility-check
+        with:
+          mc_version: ${{ matrix.mc_version }}
   release:
     name: Release
     runs-on: ubuntu-24.04
-    needs: validate
+    needs: compatibility-tests
     permissions:
       contents: write # to be able to publish a GitHub release
       issues: write # to be able to comment on released issues
@@ -28,13 +43,11 @@ jobs:
       is_release: ${{ steps.release-check.outputs.is_release }}
       release_tag: ${{ steps.release-check.outputs.release_tag }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.VERSION_BUMPER_PRIVATE_KEY }}
           fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
       - name: Install semantic-release plugins
@@ -67,10 +80,8 @@ jobs:
     permissions:
       contents: write # to be able to add artifact to GitHub release
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-      - name: run gradle build
-        uses: ./.github/actions/gradle-build
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/gradle-build
       - name: Upload JAR to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
