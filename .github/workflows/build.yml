@@ -1,8 +1,10 @@
-name: build & test
+name: build & validate
 on:
   pull_request:
 
 jobs:
+  prepare-matrix:
+    uses: ./.github/workflows/prepare-matrix.yml
   build:
     runs-on: ubuntu-24.04
     steps:
@@ -10,18 +12,23 @@ jobs:
       - uses: ./.github/actions/gradle-build
       - uses: actions/upload-artifact@v4
         with:
-          name: mod-jar
-          path: build/libs/*.jar
+          name: mod-jar-${{ github.sha }}
+          path: mod-jar
   compatibility-tests:
-    needs: build
+    needs:
+      - build
+      - prepare-matrix
     runs-on: ubuntu-24.04
     strategy:
-      matrix:
-        mc_version: [1.20.1, 1.21.11]
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: mod-jar
+          name: mod-jar-${{ github.sha }}
+          path: mod-jar
       - uses: ./.github/actions/fabric-compatibility-check
         with:
           mc_version: ${{ matrix.mc_version }}
+          loader_version: ${{ matrix.loader_version }}
+          installer_version: ${{ matrix.installer_version }}
+          additional_mod_urls: ${{ matrix.additional_mod_urls }}

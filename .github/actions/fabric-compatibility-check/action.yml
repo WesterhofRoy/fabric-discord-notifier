@@ -13,6 +13,10 @@ inputs:
     required: true
     default: "1.1.1"
     description: Fabric installer version to use
+  additional_mod_urls:
+    required: false
+    default: ""
+    description: Space-separated list of mod jar URLs to install
   log_message:
     required: false
     default: "Fabric discord notifier initialized"
@@ -28,23 +32,45 @@ runs:
         cache: 'gradle'
     - name: Prepare server dir
       shell: bash
-      run: mkdir -p server/libraries
+      run: |
+        rm -rf server
+        mkdir -p server/libraries
     - uses: actions/cache@v4
       with:
-        path: server/libraries
-        key: fabric-libs-${{ inputs.mc_version }}-${{ inputs.loader_version }}
+        path: |
+          server/libraries
+        key: fabric-libs-${{ runner.os }}-${{ inputs.mc_version }}-${{ inputs.loader_version }}-${{ inputs.installer_version }}-v1
     - name: Setup Fabric server
       shell: bash
       run: |
         cd server
-        curl -OJ https://meta.fabricmc.net/v2/versions/loader/${{ inputs.mc_version }}/${{ inputs.loader_version }}/${{ inputs.installer_version }}/server/jar
-        mv *.jar fabric-server.jar
+        if [ ! -s fabric-server.jar ]; then
+          curl -o fabric-server.jar https://meta.fabricmc.net/v2/versions/loader/${{ inputs.mc_version }}/${{ inputs.loader_version }}/${{ inputs.installer_version }}/server/jar
+        fi
         echo "eula=true" > eula.txt
         mkdir mods
-        cp ../*.jar mods/
+
+        # Copy built mod artifact
+        cp ../mod-jar/*.jar mods/
+        
+        # Optional additional mods
+        # `IFS= ` -> disables field splitting
+        # `read -r url` -> read raw string (no escaping) into var `url`
+        while IFS= read -r url; do
+          # skip on empty string
+          [ -z "$url" ] && continue
+          echo "Downloading mod dependency: $url"
+          curl -L -o "mods/$(basename "$url")" "$url"
+        done <<< "${{ inputs.additional_mod_urls }}"
+        
+        # print all mods for debugging
+        ls mods/*.jar
     - name: Smoke test server start
       shell: bash
       run: |
         cd server
-        timeout 60 java -jar fabric-server.jar nogui || echo "Server exited"
-        test -f logs/latest.log && grep -q "${{ inputs.log_message }}" logs/latest.log
+        timeout 240 java -jar fabric-server.jar nogui || exit 1
+        test -f logs/latest.log
+        grep -q "Done (" logs/latest.log
+        grep -q "Preparing level" logs/latest.log
+        grep -Fq "${{ inputs.log_message }}" logs/latest.log
