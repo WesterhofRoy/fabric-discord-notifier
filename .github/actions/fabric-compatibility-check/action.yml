@@ -69,8 +69,41 @@ runs:
       shell: bash
       run: |
         cd server
-        timeout 240 java -jar fabric-server.jar nogui || exit 1
-        test -f logs/latest.log
-        grep -q "Done (" logs/latest.log
-        grep -q "Preparing level" logs/latest.log
-        grep -Fq "${{ inputs.log_message }}" logs/latest.log
+        
+        # Start server
+        java -jar fabric-server.jar nogui > server.log 2>&1 &
+        SERVER_PID=$!
+        
+        echo "Waiting for server startup..."
+        
+        START=$(date +%s)
+        MAX_WAIT=240
+        
+        while true; do
+          # Success condition
+          if grep -q "Done (" server.log; then
+            echo "Server started successfully"
+            break
+          fi
+        
+          # Timeout check
+          NOW=$(date +%s)
+          if (( NOW - START > MAX_WAIT )); then
+          echo "Server failed to start within ${MAX_WAIT}s"
+          tail -n 200 server.log
+          kill $SERVER_PID || true
+          wait $SERVER_PID || true
+          exit 1
+          fi
+        
+          echo "Server not fully started… waiting 5 seconds"
+          sleep 5
+        done
+        
+        # Validate expected log output
+        grep -q "Preparing level" server.log
+        grep -Fq "${{ inputs.log_message }}" server.log
+        
+        # Stop server
+        kill $SERVER_PID || true
+        wait $SERVER_PID || true
