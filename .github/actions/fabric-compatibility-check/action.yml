@@ -100,9 +100,18 @@ runs:
           sleep 5
         done
         
-        # Validate expected log output
-        grep -q "Preparing level" server.log
-        grep -Fq "${{ inputs.log_message }}" server.log
+        # Validate expected log output (might make this dynamic if there are more checks)
+        if ! grep -q "Preparing level" server.log; then
+          echo "World preparation message missing"
+          tail -n 100 server.log
+          exit 1
+        fi
+        
+        if ! grep -Fq "${{ inputs.log_message }}" server.log; then
+          echo "Expected mod log message missing"
+          tail -n 100 server.log
+          exit 1
+        fi
         
         # Stop server
         kill $SERVER_PID || true
