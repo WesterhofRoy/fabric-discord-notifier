@@ -89,11 +89,11 @@ runs:
           # Timeout check
           NOW=$(date +%s)
           if (( NOW - START > MAX_WAIT )); then
-          echo "Server failed to start within ${MAX_WAIT}s"
-          tail -n 200 server.log
-          kill $SERVER_PID || true
-          wait $SERVER_PID || true
-          exit 1
+            echo "Server failed to start within ${MAX_WAIT}s"
+            tail -n 200 server.log
+            kill $SERVER_PID || true
+            wait $SERVER_PID || true
+            exit 1
           fi
         
           echo "Server not fully started… waiting 5 seconds"
@@ -108,7 +108,7 @@ runs:
         fi
         
         if ! grep -Fq "${{ inputs.log_message }}" server.log; then
-          echo "Expected mod log message missing"
+          echo "Log message ${{ inputs.log_message }} missing"
           tail -n 100 server.log
           exit 1
         fi
