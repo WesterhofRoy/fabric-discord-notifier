@@ -7,34 +7,62 @@ on:
 permissions:
   contents: read # for checkout
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  validate:
+  prepare-matrix:
+    uses: ./.github/workflows/prepare-matrix.yml
+  build:
     name: Validate Build
     runs-on: ubuntu-24.04
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-      - name: run gradle build
-        uses: ./.github/actions/gradle-build
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/gradle-build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-jar-${{ github.sha }}
+          path: mod-jar
+  compatibility-tests:
+    needs:
+      - build
+      - prepare-matrix
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: mod-jar-${{ github.sha }}
+      - uses: ./.github/actions/fabric-compatibility-check
+        with:
+          mc_version: ${{ matrix.mc_version }}
+          loader_version: ${{ matrix.loader_version }}
+          installer_version: ${{ matrix.installer_version }}
+          additional_mod_urls: ${{ matrix.additional_mod_urls }}
   release:
     name: Release
     runs-on: ubuntu-24.04
-    needs: validate
+    needs: compatibility-tests
     permissions:
       contents: write # to be able to publish a GitHub release
       issues: write # to be able to comment on released issues
       pull-requests: write # to be able to comment on released pull requests
     outputs:
-      is_release: ${{ steps.release-check.outputs.is_release }}
-      release_tag: ${{ steps.release-check.outputs.release_tag }}
+      is_release: ${{ steps.semantic.outputs.is_release }}
+      release_tag: ${{ steps.semantic.outputs.release_tag }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.VERSION_BUMPER_PRIVATE_KEY }}
           fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-semantic-release
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
       - name: Install semantic-release plugins
@@ -44,20 +72,18 @@ jobs:
             @semantic-release/exec \
             @semantic-release/git
       - name: Run semantic-release
+        id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: semantic-release
-      - name: Output release information
-        id: release-check
-        shell: bash
         run: |
-          TAG=$(git describe --tags --abbrev=0 --exact-match 2>/dev/null || true)
-
-          if [ -z "$TAG" ]; then
-            echo "is_release=false" >> "$GITHUB_OUTPUT"
-          else
+          semantic-release > semantic.log || exit 1
+          
+          if grep -q "Published release" semantic.log; then
             echo "is_release=true" >> "$GITHUB_OUTPUT"
+            TAG=$(grep -oP '(?<=tag: )v?[0-9]+\.[0-9]+\.[0-9]+' semantic.log | tail -1)
             echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
           fi
   publish:
     name: Publish
@@ -67,14 +93,15 @@ jobs:
     permissions:
       contents: write # to be able to add artifact to GitHub release
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v4
-      - name: run gradle build
-        uses: ./.github/actions/gradle-build
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: mod-jar-${{ github.sha }}
+          path: mod-jar
       - name: Upload JAR to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release.outputs.release_tag }}
-          files: "build/libs/*.jar"
+          files: "mod-jar/*.jar"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

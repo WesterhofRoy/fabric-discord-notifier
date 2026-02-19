@@ -1,0 +1,118 @@
+name: Fabric compatibility smoke test
+description: Starts a Fabric server with a mod jar and verifies it loads
+
+inputs:
+  mc_version:
+    required: true
+    description: The Minecraft version the fabric server should be running
+  loader_version:
+    required: true
+    default: "0.18.4"
+    description: Fabric loader version to use
+  installer_version:
+    required: true
+    default: "1.1.1"
+    description: Fabric installer version to use
+  additional_mod_urls:
+    required: false
+    default: ""
+    description: Newline-separated list of mod jar URLs to install
+  log_message:
+    required: false
+    default: "Fabric discord notifier initialized"
+    description: Log message to validate after server has started
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'microsoft'
+        cache: 'gradle'
+    - name: Prepare server dir
+      shell: bash
+      run: |
+        rm -rf server
+        mkdir -p server/libraries
+    - uses: actions/cache@v4
+      with:
+        path: |
+          server/libraries
+        key: fabric-libs-${{ runner.os }}-${{ inputs.mc_version }}-${{ inputs.loader_version }}-${{ inputs.installer_version }}-v1
+    - name: Setup Fabric server
+      shell: bash
+      run: |
+        cd server
+        if [ ! -s fabric-server.jar ]; then
+          curl -o fabric-server.jar https://meta.fabricmc.net/v2/versions/loader/${{ inputs.mc_version }}/${{ inputs.loader_version }}/${{ inputs.installer_version }}/server/jar
+        fi
+        echo "eula=true" > eula.txt
+        mkdir mods
+
+        # Copy built mod artifact
+        cp ../mod-jar/*.jar mods/
+        
+        # Optional additional mods
+        # `IFS= ` -> disables field splitting
+        # `read -r url` -> read raw string (no escaping) into var `url`
+        while IFS= read -r url; do
+          # skip on empty string
+          [ -z "$url" ] && continue
+          echo "Downloading mod dependency: $url"
+          curl -fL --retry 2 --retry-delay 2 -o "mods/$(basename "$url")" "$url"
+        done <<< "${{ inputs.additional_mod_urls }}"
+        
+        # print all mods for debugging
+        ls mods/*.jar
+    - name: Smoke test server start
+      shell: bash
+      run: |
+        cd server
+        
+        # Start server
+        java -jar fabric-server.jar nogui > server.log 2>&1 &
+        SERVER_PID=$!
+        
+        echo "Waiting for server startup..."
+        
+        START=$(date +%s)
+        MAX_WAIT=240
+        
+        while true; do
+          # Success condition
+          if grep -q "Done (" server.log; then
+            echo "Server started successfully"
+            break
+          fi
+        
+          # Timeout check
+          NOW=$(date +%s)
+          if (( NOW - START > MAX_WAIT )); then
+            echo "Server failed to start within ${MAX_WAIT}s"
+            tail -n 200 server.log
+            kill $SERVER_PID || true
+            wait $SERVER_PID || true
+            exit 1
+          fi
+        
+          echo "Server not fully started… waiting 5 seconds"
+          sleep 5
+        done
+        
+        # Validate expected log output (might make this dynamic if there are more checks)
+        if ! grep -q "Preparing level" server.log; then
+          echo "World preparation message missing"
+          tail -n 100 server.log
+          exit 1
+        fi
+        
+        if ! grep -Fq "${{ inputs.log_message }}" server.log; then
+          echo "Log message ${{ inputs.log_message }} missing"
+          tail -n 100 server.log
+          exit 1
+        fi
+        
+        # Stop server
+        kill $SERVER_PID || true
+        wait $SERVER_PID || true

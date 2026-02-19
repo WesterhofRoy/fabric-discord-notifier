@@ -1,0 +1,23 @@
+name: Prepare matrix
+
+on:
+  workflow_call:
+    outputs:
+      matrix:
+        description: Generated test matrix
+        value: ${{ jobs.prepare.outputs.matrix }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yq
+        run: |
+          curl -sL https://github.com/mikefarah/yq/releases/download/v4.52.2/yq_linux_amd64 -o yq
+          chmod +x yq
+      - id: prepare
+        run: |
+          echo "matrix=$(./yq -o=json '.' .github/fabric-compatibility-matrix.yml | jq -c .)" >> $GITHUB_OUTPUT

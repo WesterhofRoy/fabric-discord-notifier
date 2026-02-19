@@ -18,3 +18,8 @@ runs:
     - name: build
       shell: bash
       run: ./gradlew build
+    - name: copy built jar to output dir
+      shell: bash
+      run: |
+        mkdir -p mod-jar
+        cp build/libs/*.jar mod-jar/

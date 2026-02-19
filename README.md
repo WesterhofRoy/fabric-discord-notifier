@@ -23,7 +23,7 @@ A simple Fabric mod that sends Minecraft server notifications to a Discord chann
 
 ## Requirements
 
-- Minecraft 1.21.11
+- Minecraft >=1.20.1 <=1.21.1
 - Fabric Loader 0.18.4 or newer
 - Java 21 or newer
 
