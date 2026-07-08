@@ -21,7 +21,7 @@ object PlayerEventHandler : EventHandler {
                 val player = handler.player
                 val playerNames = server.playerNames.plus(player.name.string).joinToString(", ")
 
-                val message = "🟢  ${player.name.string} joined! (${server.currentPlayerCount + 1} online)" +
+                val message = "🟢  ${player.name.string} joined! (${server.playerCount + 1} online)" +
                     "\nPlayers online: $playerNames"
 
                 DiscordMessageSender.sendMessage(webhookUrl, message)
@@ -31,7 +31,7 @@ object PlayerEventHandler : EventHandler {
         if (playerMessagesConfig.enableLeaveMessages) {
             ServerPlayConnectionEvents.DISCONNECT.register { handler, server ->
                 val player = handler.player
-                val playerCount = server.currentPlayerCount - 1
+                val playerCount = server.playerCount - 1
 
                 val message = "🔴  ${player.name.string} left.. ($playerCount online)"
 

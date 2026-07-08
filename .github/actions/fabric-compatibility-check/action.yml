@@ -65,6 +65,37 @@ runs:
         
         # print all mods for debugging
         ls mods/*.jar
+    - name: Seed mod config
+      shell: bash
+      run: |
+        # Pre-seed a config with a configured webhook so the mod actually
+        # registers its event listeners instead of early-returning on the
+        # default blank webhookUrl. A fresh, unconfigured server never
+        # exercises this code path, which let a version-incompatible event
+        # registration ship undetected. The URL is deliberately unreachable
+        # (no real webhook needed) - DiscordMessageSender swallows send
+        # failures, so this only proves the listeners load, not that
+        # delivery succeeds.
+        mkdir -p server/config
+        cat > server/config/player-discord-notifier.json <<'EOF'
+        {
+          "webhookUrl": "http://127.0.0.1:1/ci-smoke-test-placeholder",
+          "messages": {
+            "player": {
+              "enabled": true,
+              "webhookUrl": "",
+              "enableJoinMessages": true,
+              "enableLeaveMessages": true
+            },
+            "server": {
+              "enabled": true,
+              "webhookUrl": "",
+              "enableStartedMessages": true,
+              "enableStoppedMessages": true
+            }
+          }
+        }
+        EOF
     - name: Smoke test server start
       shell: bash
       run: |
