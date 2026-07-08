@@ -27,7 +27,7 @@ runs:
   steps:
     - uses: actions/setup-java@v4
       with:
-        java-version: '21'
+        java-version: '25'
         distribution: 'microsoft'
         cache: 'gradle'
     - name: Prepare server dir
@@ -85,7 +85,16 @@ runs:
             echo "Server started successfully"
             break
           fi
-        
+
+          # Fail fast: process already died, no point waiting out the timeout
+          if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+            wait "$SERVER_PID"
+            EXIT_CODE=$?
+            echo "Server process exited early (exit code ${EXIT_CODE}) before startup completed"
+            tail -n 200 server.log
+            exit 1
+          fi
+
           # Timeout check
           NOW=$(date +%s)
           if (( NOW - START > MAX_WAIT )); then
