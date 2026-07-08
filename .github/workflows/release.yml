@@ -92,6 +92,27 @@ jobs:
         with:
           name: mod-jar-${{ github.sha }}
           path: mod-jar
+      - name: Relabel jar with the released version
+        run: |
+          # The jar was built before the release job bumped mod_version, so
+          # it still carries the previous release's version in its filename
+          # and embedded fabric.mod.json. mod_version is cosmetic only (it
+          # doesn't affect compiled bytecode or dependencies), so patch it
+          # in place instead of paying for a second full build.
+          VERSION="${{ needs.release.outputs.release_tag }}"
+          VERSION="${VERSION#v}"
+          cd mod-jar
+          MAIN_JAR=$(ls fabric-discord-notifier-*.jar | grep -v -- -sources)
+          SOURCES_JAR=$(ls fabric-discord-notifier-*-sources.jar)
+
+          mkdir patch && cd patch
+          unzip -q "../$MAIN_JAR" fabric.mod.json
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" fabric.mod.json
+          zip -q "../$MAIN_JAR" fabric.mod.json
+          cd .. && rm -rf patch
+
+          mv "$MAIN_JAR" "fabric-discord-notifier-$VERSION.jar"
+          mv "$SOURCES_JAR" "fabric-discord-notifier-$VERSION-sources.jar"
       - name: Upload JAR to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
