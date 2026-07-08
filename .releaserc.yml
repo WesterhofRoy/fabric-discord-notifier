@@ -15,6 +15,7 @@ plugins:
   - "@semantic-release/release-notes-generator"
   - - "@semantic-release/exec"
     - prepareCmd: sed -i s/^mod_version=.*/mod_version=${nextRelease.version}/ gradle.properties
+      successCmd: 'echo "is_release=true" >> $GITHUB_OUTPUT && echo "release_tag=${nextRelease.gitTag}" >> $GITHUB_OUTPUT'
   - - "@semantic-release/git"
     - assets:
         - gradle.properties
